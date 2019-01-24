@@ -33,6 +33,11 @@ class SentryNode(object):
         rospy.Subscriber('/camera/depth_registered/image',
                          Image, self.depth_callback, queue_size=1)
         rospy.spin()
+	#vertical scan from previous callback 
+	self.prev = None
+	self.alpha = .3
+	self.threshold = 1.2
+	self.average = 1
 
     def depth_callback(self, depth_msg):
         """ Handle depth callbacks. """
@@ -42,7 +47,29 @@ class SentryNode(object):
 
         # YOUR CODE HERE.
         # HELPER METHODS ARE GOOD.
+	depthArray = np.array(depth)
+	
+	#dimensions of the depthArray
+	dim = depthArray.shape
 
+	#middle column of the depthArray
+	middle = dim[1]/2
+
+	#current vertical scan
+	curr = depthArray[:, middle - 1]
+	curr = curr[~np.isnan(curr)]
+
+	#if we have a prev scan then calculate the norm
+	if not self.prev:
+		norm = curr - prev
+		norm = np.abs(norm)
+		norm = norm.sum()
+		self.average = self.average*self.alpha + norm*(1- self.alpha) 
+	self.prev = curr
+
+	if norm/self.average > self.threshold:
+		#beep
+		rospy.Publisher('/mobile_base/commands/sound', sound, queue = 1)
 
 if __name__ == "__main__":
     SentryNode()
