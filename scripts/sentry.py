@@ -10,6 +10,7 @@ Version:
 import rospy
 
 from sensor_msgs.msg import Image
+from kobuki_msgs import Sound
 from cv_bridge import CvBridge, CvBridgeError
 import numpy as np
 
@@ -66,9 +67,9 @@ class SentryNode(object):
 		norm = norm.sum()
 		self.average = self.average*self.alpha + norm*(1- self.alpha) 
 	self.prev = curr
-
+	sound = Sound()
 	if norm/self.average > self.threshold:
-		#beep
+		sound.value = 4
 		rospy.Publisher('/mobile_base/commands/sound', sound, queue = 1)
 
 if __name__ == "__main__":
